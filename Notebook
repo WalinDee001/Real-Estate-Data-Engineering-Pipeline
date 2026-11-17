@@ -1,0 +1,85 @@
+Project Overview
+
+
+
+Importing Required Libraries
+
+import pandas as pd
+import numpy as np
+import json
+import requests
+pd.set_option('display.max_columns', None)
+%pip install sqlalchemy pymysql
+
+
+Extracting Real Estate Data from RapidAPI
+
+url = "https://realty-in-us.p.rapidapi.com/properties/v3/list"
+
+payload = {
+    "limit": 200,
+    "offset": 0,
+    "postal_code": "90004",
+    "status": ["for_sale", "ready_to_build"],
+    "sort": {
+        "direction": "desc",
+        "field": "list_date"
+    }
+}
+headers = {
+    "x-rapidapi-key": "546d265a5emsh737bfd049f71095p115b8bjsne2bfa4c0be46",
+    "x-rapidapi-host": "realty-in-us.p.rapidapi.com",
+    "Content-Type": "application/json"
+}
+
+response = requests.post(url, json=payload, headers=headers)
+data = response.json()
+
+print(data)
+
+
+
+Inspecting the API Response
+
+results = data['data']['home_search']['results']
+df = pd.json_normalize(results, sep='_')
+
+
+
+Flattening Nested JSON Data
+
+
+
+Exploring the DataFrame
+
+
+
+Identifying Nested and Unwanted Columns
+
+
+
+Handling Missing Values
+
+
+
+Converting Boolean Columns
+
+
+
+Converting Numeric Columns
+
+
+
+Preparing Data for MySQL
+
+
+
+Establishing MySQL Connection
+
+
+
+Loading Data into the Bronze Layer
+
+
+
+Validating the Bronze Table
