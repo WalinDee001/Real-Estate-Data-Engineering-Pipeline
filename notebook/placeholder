@@ -1,1 +1,93 @@
+#Importing Required Libraries
 
+import pandas as pd
+import numpy as np
+import json
+import requests
+pd.set_option('display.max_columns', None)
+%pip install sqlalchemy pymysql
+
+
+##Extracting Real Estate Data from RapidAPI
+
+url = "https://realty-in-us.p.rapidapi.com/properties/v3/list"
+
+payload = {
+    "limit": 200,
+    "offset": 0,
+    "postal_code": "90004",
+    "status": ["for_sale", "ready_to_build"],
+    "sort": {
+        "direction": "desc",
+        "field": "list_date"
+    }
+}
+headers = {
+    "x-rapidapi-key": "546d265a5emsh737bfd049f71095p115b8bjsne2bfa4c0be46",
+    "x-rapidapi-host": "realty-in-us.p.rapidapi.com",
+    "Content-Type": "application/json"
+}
+
+response = requests.post(url, json=payload, headers=headers)
+data = response.json()
+
+print(data)
+
+
+
+
+##Inspecting the API Response
+
+{'data': {'home_search': {'__typename': 'SearchHomeResult', 'count': 140, 'total': 140, 'results': 
+[{'__typename': 'SearchHome', 'property_id': '1761731737', 'listing_id': '3002340299', 'plan_id': None, 'status': 'for_sale', 'photo_count': 36, 'branding':
+[{'__typename': 'Branding', 'photo': None, 'name': 'Blue Sky Real Estate Center', 'phone': None, 'link': None}], 'location': {'__typename': 'SearchHomeLocation', 'address':
+{'__typename': 'SearchHomeAddress', 'city': 'Los Angeles', 'line': '317 N Commonwealth Ave', 'street_name': 'Commonwealth', 'street_number': '317', 'street_suffix': 'Ave',
+'country': 'USA', 'postal_code': '90004', 'state_code': 'CA', 'state': 'California', 'coordinate': {'__typename': 'Coordinate', 'lat': 34.077308, 'lon': -118.285939, 'accuracy': None}
+}, 'street_view_url': 'https://maps.googleapis.com/maps/api/streetview?channel=rdc-streetview&key=AIzaSyAP_xs30yS0J4xp8O1ZKUrUttIXKklrwaM&location=317%20N%20Commonwealth%20
+Ave%2C%20Los%20Angeles%2C%20CA%2090004&size=640x480&source=outdoor&signature=MldQ8umw3dKP3Oq7xQXMTOyysw0=', 'county': {'__typename': 'HomeCounty', 'fips_code': '06037'}}
+, 'open_houses': None, 'description': {'__typename': 'SearchHomeDescription', 'sub_type': None, 'type': 'multi_family', 'beds': 5, 'baths': 4, 'lot_sqft': 7501, 'sqft': None,
+'beds_max': None, 'beds_min': None, 'sqft_max': None, 'sqft_min': None, 'baths_full': 4, 'baths_half': None, 'baths_min': None, 'baths_max': None, 'baths_full_calc': 4, 
+'baths_partial_calc': None}, 'virtual_tours': None, 'matterport': False, 'advertisers': [{'__typename': 'HomeAdvertiser', 'fulfillment_id': '4456508', 'name': 'Tony Sanchez',
+'email': 'tonysanchez247@gmail.com', 'href': 'TONYSANCHEZ247.COM', 'slogan': None, 'type': 'seller'}], 'flags': {'__typename': 'SearchHomeFlags', 'is_price_reduced': None,
+'is_new_construction': None, 'is_foreclosure': None, 'is_plan': None, 'is_new_listing': True, 'is_coming_soon': None, 'is_contingent': None, 'is_pending': None}, 'source': 
+{'__typename': 'MlsSource', 'agents': [{'__typename': 'MlsAgent', 'id': 'MRC
+
+
+
+Flattening Nested JSON Data
+
+
+
+Exploring the DataFrame
+
+
+
+Identifying Nested and Unwanted Columns
+
+
+
+Handling Missing Values
+
+
+
+Converting Boolean Columns
+
+
+
+Converting Numeric Columns
+
+
+
+Preparing Data for MySQL
+
+
+
+Establishing MySQL Connection
+
+
+
+Loading Data into the Bronze Layer
+
+
+
+Validating the Bronze Table
