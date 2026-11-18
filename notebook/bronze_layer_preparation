@@ -1,0 +1,448 @@
+==========================================================
+#Importing Required Libraries
+==========================================================
+
+
+import pandas as pd
+import numpy as np
+import json
+import requests
+pd.set_option('display.max_columns', None)
+%pip install sqlalchemy pymysql
+
+=========================================================
+##Extracting Real Estate Data from RapidAPI
+=========================================================
+
+url = "https://realty-in-us.p.rapidapi.com/properties/v3/list"
+
+payload = {
+    "limit": 200,
+    "offset": 0,
+    "postal_code": "90004",
+    "status": ["for_sale", "ready_to_build"],
+    "sort": {
+        "direction": "desc",
+        "field": "list_date"
+    }
+}
+headers = {
+    "x-rapidapi-key": "546d265a5emsh737bfd049f71095p115b8bjsne2bfa4c0be46",
+    "x-rapidapi-host": "realty-in-us.p.rapidapi.com",
+    "Content-Type": "application/json"
+}
+
+response = requests.post(url, json=payload, headers=headers)
+data = response.json()
+
+print(data)
+
+
+
+===========================================================================
+##Inspecting the API Response
+==========================================================================
+
+
+{'data': {'home_search': {'__typename': 'SearchHomeResult', 'count': 140, 'total': 140, 'results': 
+[{'__typename': 'SearchHome', 'property_id': '1761731737', 'listing_id': '3002340299', 'plan_id': None, 'status': 'for_sale', 'photo_count': 36, 'branding':
+[{'__typename': 'Branding', 'photo': None, 'name': 'Blue Sky Real Estate Center', 'phone': None, 'link': None}], 'location': {'__typename': 'SearchHomeLocation', 'address':
+{'__typename': 'SearchHomeAddress', 'city': 'Los Angeles', 'line': '317 N Commonwealth Ave', 'street_name': 'Commonwealth', 'street_number': '317', 'street_suffix': 'Ave',
+'country': 'USA', 'postal_code': '90004', 'state_code': 'CA', 'state': 'California', 'coordinate': {'__typename': 'Coordinate', 'lat': 34.077308, 'lon': -118.285939, 'accuracy': None}
+}, 'street_view_url': 'https://maps.googleapis.com/maps/api/streetview?channel=rdc-streetview&key=AIzaSyAP_xs30yS0J4xp8O1ZKUrUttIXKklrwaM&location=317%20N%20Commonwealth%20
+Ave%2C%20Los%20Angeles%2C%20CA%2090004&size=640x480&source=outdoor&signature=MldQ8umw3dKP3Oq7xQXMTOyysw0=', 'county': {'__typename': 'HomeCounty', 'fips_code': '06037'}}
+, 'open_houses': None, 'description': {'__typename': 'SearchHomeDescription', 'sub_type': None, 'type': 'multi_family', 'beds': 5, 'baths': 4, 'lot_sqft': 7501, 'sqft': None,
+'beds_max': None, 'beds_min': None, 'sqft_max': None, 'sqft_min': None, 'baths_full': 4, 'baths_half': None, 'baths_min': None, 'baths_max': None, 'baths_full_calc': 4, 
+'baths_partial_calc': None}, 'virtual_tours': None, 'matterport': False, 'advertisers': [{'__typename': 'HomeAdvertiser', 'fulfillment_id': '4456508', 'name': 'Tony Sanchez',
+'email': 'tonysanchez247@gmail.com', 'href': 'TONYSANCHEZ247.COM', 'slogan': None, 'type': 'seller'}], 'flags': {'__typename': 'SearchHomeFlags', 'is_price_reduced': None,
+'is_new_construction': None, 'is_foreclosure': None, 'is_plan': None, 'is_new_listing': True, 'is_coming_soon': None, 'is_contingent': None, 'is_pending': None}, 'source': 
+{'__typename': 'MlsSource', 'agents': [{'__typename': 'MlsAgent', 'id': 'MRC
+
+
+==========================================================================
+Flattening Nested JSON Data
+==========================================================================
+results = data['data']['home_search']['results']
+df = pd.json_normalize(results, sep='_')
+
+
+==========================================================================
+Exploring the DataFrame
+==========================================================================
+	property_id	listing_id	plan_id	status	photo_count	branding	open_houses	virtual_tours	matterport	advertisers	pet_policy	community	href	list_price	list_price_min	list_price_max	price_reduced_amount	estimate	last_sold_date	list_date	last_sold_price	location___typename	location_address___typename	location_address_city	location_address_line	location_address_street_name	location_address_street_number	location_address_street_suffix	location_address_country	location_address_postal_code	location_address_state_code	location_address_state	location_address_coordinate___typename	location_address_coordinate_lat	location_address_coordinate_lon	location_address_coordinate_accuracy	location_street_view_url	location_county___typename	location_county_fips_code	description___typename	description_sub_type	description_type	description_beds	description_baths	description_lot_sqft	description_sqft	description_beds_max	description_beds_min	description_sqft_max	description_sqft_min	description_baths_full	description_baths_half	description_baths_min	description_baths_max	description_baths_full_calc	description_baths_partial_calc	flags___typename	flags_is_price_reduced	flags_is_new_construction	flags_is_foreclosure	flags_is_plan	flags_is_new_listing	flags_is_coming_soon	flags_is_contingent	flags_is_pending	source___typename	source_agents	source_id	source_type	source_spec_id	source_plan_id	source_listing_href	source_listing_id	primary_photo___typename	primary_photo_href	lead_attributes___typename	lead_attributes_lead_type	lead_attributes_show_contact_an_agent	lead_attributes_opcity_lead_attributes___typename	lead_attributes_opcity_lead_attributes_flip_the_market_enabled	products___typename	products_brand_name	products_products	estimate___typename	estimate_estimate	pet_policy___typename	pet_policy_cats	pet_policy_dogs	products
+0	2105808184	3001939771	None	for_sale	18	[{'__typename': 'Branding', 'photo': None, 'na...	None	None	False	[{'__typename': 'HomeAdvertiser', 'fulfillment...	NaN	None	https://www.realtor.com/realestateandhomes-det...	1399000	None	None	NaN	NaN	2018-07-18	2026-10-17T06:11:02.000000Z	1750000.0	SearchHomeLocation	SearchHomeAddress	Los Angeles	525 N Kenmore Ave	Kenmore	525	Ave	USA	90004	CA	California	Coordinate	34.079926	-118.297086	None	https://maps.googleapis.com/maps/api/streetvie...	HomeCounty	06037	SearchHomeDescription	None	multi_family	12.0	7.0	10328.0	NaN	None	None	None	None	7.0	NaN	None	None	7.0	NaN	SearchHomeFlags	None	None	None	None	True	None	None	None	MlsSource	[{'__typename': 'MlsAgent', 'id': 'MRCA', 'age...	MRCA	mls	None	None	None	LG26225283	HomePhoto	https://ap.rdcpix.com/0f4a460094a334e5ade28441...	LeadAttributes	co_broke	True	OpCityLeadAttributes	True	ProductSummarySearchHome	basic_opt_in	[core.agent, co_broke]	NaN	NaN	NaN	NaN	NaN	NaN
+1	2006270852	3001921354	None	for_sale	32	[{'__typename': 'Branding', 'photo': None, 'na...	[{'__typename': 'HomeOpenHouse', 'start_date':...	None	False	[{'__typename': 'HomeAdvertiser', 'fulfillment...	NaN	None	https://www.realtor.com/realestateandhomes-det...	2945000	None	None	NaN	NaN	2024-02-26	2026-10-16T19:04:23.000000Z	2675000.0	SearchHomeLocation	SearchHomeAddress	Los Angeles	215 N Gower St	Gower	215	St	USA	90004	CA	California	Coordinate	34.074968	-118.322891	None	https://maps.googleapis.com/maps/api/streetvie...	HomeCounty	06037	SearchHomeDescription	None	single_family	3.0	3.0	6482.0	2217.0	None	None	None	None	2.0	1.0	None	None	2.0	1.0	SearchHomeFlags	None	None	None	None	True	None	None	None	MlsSource	[{'__typename': 'MlsAgent', 'id': 'WECA', 'age...	WECA	mls	None	None	None	26102447	HomePhoto	https://ap.rdcpix.com/b7c6ec09f2995938427871d7...	LeadAttributes	co_broke	True	OpCityLeadAttributes	True	ProductSummarySearchHome	essentials	[core.agent, core.broker, co_broke]	LatestEstimate	2878900.0	NaN	NaN	NaN	NaN
+2	1993302304	3001921350	None	for_sale	22	[{'__typename': 'Branding', 'photo': None, 'na...	[{'__typename': 'HomeOpenHouse', 'start_date':...	None	False	[{'__typename': 'HomeAdvertiser', 'fulfillment...	NaN	None	https://www.realtor.com/realestateandhomes-det...	9995000	None	None	NaN	NaN	2021-03-08	2026-10-16T19:04:23.000000Z	5626000.0	SearchHomeLocation	SearchHomeAddress	Los Angeles	5180 W 2nd St	2nd	5180	St	USA	90004	CA	California	Coordinate	34.071783	-118.331259	None	https://maps.googleapis.com/maps/api/streetvie...	HomeCounty	06037	SearchHomeDescription	None	single_family	6.0	7.0	15960.0	6322.0	None	None	None	None	7.0	NaN	None	None	7.0	NaN	SearchHomeFlags	None	None	None	None	True	None	None	None	MlsSource	[{'__typename': 'MlsAgent', 'id': 'WECA', 'age...	WECA	mls	None	None	None	26873275	HomePhoto	https://ap.rdcpix.com/01121e6e80662b0537839408...	LeadAttributes	co_broke	True	OpCityLeadAttributes	True	ProductSummarySearchHome	basic_opt_in	[core.agent, co_broke]	LatestEstimate	6964400.0	NaN	NaN	NaN	NaN
+3	2066418083	3001918326	None	for_sale	23	[{'__typename': 'Branding', 'photo': None, 'na...	None	None	False	[{'__typename': 'HomeAdvertiser', 'fulfillment...	NaN	None	https://www.realtor.com/realestateandhomes-det...	19995000	None	None	NaN	NaN	2018-05-04	2026-10-16T18:04:07.000000Z	6700000.0	SearchHomeLocation	SearchHomeAddress	Los Angeles	5170 W 2nd St	2nd	5170	St	USA	90004	CA	California	Coordinate	34.071877	-118.330953	None	https://maps.googleapis.com/maps/api/streetvie...	HomeCounty	06037	SearchHomeDescription	None	single_family	5.0	6.0	17894.0	7620.0	None	None	None	None	6.0	NaN	None	None	6.0	NaN	SearchHomeFlags	None	None	None	None	True	None	None	None	MlsSource	[{'__typename': 'MlsAgent', 'id': 'WECA', 'age...	WECA	mls	None	None	None	26873281	HomePhoto	https://ap.rdcpix.com/7361b331c0c22e509aa1373d...	LeadAttributes	co_broke	True	OpCityLeadAttributes	True	ProductSummarySearchHome	basic_opt_in	[core.agent, co_broke]	LatestEstimate	8422900.0	NaN	NaN	NaN	NaN
+4	2203146826	3001918335	None	for_sale	16	[{'__typename': 'Branding', 'photo': None, 'na...	[{'__typename': 'HomeOpenHouse', 'start_date':...	None	False	[{'__typename': 'HomeAdvertiser', 'fulfillment...	NaN	None	https://www.realtor.com/realestateandhomes-det...	1495000	None	None	NaN	NaN	1979-07-25	2026-10-16T18:04:07.000000Z	130000.0	SearchHomeLocation	SearchHomeAddress	Los Angeles	500 N Windsor Blvd	Windsor	500	Blvd	USA	90004	CA	California	Coordinate	34.079112	-118.319327	None	https://maps.googleapis.com/maps/api/streetvie...	HomeCounty	06037	SearchHomeDescription	None	multi_family	3.0	2.0	5550.0	2041.0	None	None	None	None	2.0	NaN	None	None	2.0	NaN	SearchHomeFlags	None	None	None	None	True	None	None	None	MlsSource	[{'__typename': 'MlsAgent', 'id': 'WECA', 'age...	WECA	mls	None	None	None	26102545	HomePhoto	https://ap.rdcpix.com/e6e33e02e49efac57d3bb424...	LeadAttributes	co_broke	True	OpCityLeadAttributes	True	ProductSummarySearchHome	essentials	[core.agent, core.broker, co_broke]	LatestEstimate	1505600.0	NaN	NaN	NaN	NaN
+...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...
+138	2151123570	2986332212	None	for_sale	1	[{'__typename': 'Branding', 'photo': None, 'na...	None	None	False	[{'__typename': 'HomeAdvertiser', 'fulfillment...	NaN	None	https://www.realtor.com/realestateandhomes-det...	750000	None	None	49900.0	NaN	2002-09-24	2025-09-12T19:05:37.000000Z	180000.0	SearchHomeLocation	SearchHomeAddress	Los Angeles	422 Normandie Pl	Normandie	422	Pl	USA	90004	CA	California	Coordinate	34.078332	-118.300968	None	https://maps.googleapis.com/maps/api/streetvie...	HomeCounty	06037	SearchHomeDescription	None	multi_family	5.0	3.0	4347.0	NaN	None	None	None	None	3.0	NaN	None	None	3.0	NaN	SearchHomeFlags	False	None	None	None	False	None	None	None	MlsSource	[{'__typename': 'MlsAgent', 'id': 'MRCA', 'age...	MRCA	mls	None	None	None	SB25202487	HomePhoto	https://ap.rdcpix.com/40c203e59e7fee0f541ea563...	LeadAttributes	co_broke	True	OpCityLeadAttributes	True	ProductSummarySearchHome	essentials	[core.agent, core.broker, co_broke]	LatestEstimate	732200.0	NaN	NaN	NaN	NaN
+139	2151123570	2986332190	None	for_sale	1	[{'__typename': 'Branding', 'photo': None, 'na...	None	None	False	[{'__typename': 'HomeAdvertiser', 'fulfillment...	NaN	None	https://www.realtor.com/realestateandhomes-det...	750000	None	None	49900.0	NaN	2002-09-24	2025-09-12T19:05:37.000000Z	180000.0	SearchHomeLocation	SearchHomeAddress	Los Angeles	422 Normandie Pl	Normandie	422	Pl	USA	90004	CA	California	Coordinate	34.078332	-118.300968	None	https://maps.googleapis.com/maps/api/streetvie...	HomeCounty	06037	SearchHomeDescription	None	multi_family	5.0	3.0	4347.0	1538.0	None	None	None	None	2.0	1.0	None	None	2.0	1.0	SearchHomeFlags	False	None	None	None	False	None	None	None	MlsSource	[{'__typename': 'MlsAgent', 'id': 'MRCA', 'age...	MRCA	mls	None	None	None	SB25202445	HomePhoto	https://ap.rdcpix.com/3397b57e51d6c7f326b356a8...	LeadAttributes	co_broke	True	OpCityLeadAttributes	True	ProductSummarySearchHome	essentials	[core.agent, core.broker, co_broke]	LatestEstimate	732200.0	NaN	NaN	NaN	NaN
+140	2128279548	2986035018	None	for_sale	25	[{'__typename': 'Branding', 'photo': None, 'na...	None	None	False	[{'__typename': 'HomeAdvertiser', 'fulfillment...	NaN	None	https://www.realtor.com/realestateandhomes-det...	1850000	None	None	49000.0	NaN	2022-08-10	2025-09-04T17:16:14.000000Z	1850000.0	SearchHomeLocation	SearchHomeAddress	Los Angeles	564 N Normandie Ave	Normandie	564	Ave	USA	90004	CA	California	Coordinate	34.080902	-118.300086	None	https://maps.googleapis.com/maps/api/streetvie...	HomeCounty	06037	SearchHomeDescription	None	single_family	4.0	3.0	8703.0	3134.0	None	None	None	None	2.0	1.0	None	None	2.0	1.0	SearchHomeFlags	False	None	None	None	False	None	None	None	MlsSource	[{'__typename': 'MlsAgent', 'id': 'WECA', 'age...	WECA	mls	None	None	None	25584993	HomePhoto	https://ap.rdcpix.com/b149d791fc227de81dc53ed5...	LeadAttributes	co_broke	True	OpCityLeadAttributes	True	ProductSummarySearchHome	basic_opt_in	[core.agent, co_broke]	LatestEstimate	1839800.0	NaN	NaN	NaN	NaN
+141	2080392812	2985621868	None	for_sale	11	[{'__typename': 'Branding', 'photo': None, 'na...	None	None	False	[{'__typename': 'HomeAdvertiser', 'fulfillment...	NaN	None	https://www.realtor.com/realestateandhomes-det...	4050000	None	None	NaN	NaN	1989-07-13	2025-08-22T20:00:42.000000Z	1400000.0	SearchHomeLocation	SearchHomeAddress	Los Angeles	161 S St Andrews Pl	St Andrews	161	Pl	USA	90004	CA	California	Coordinate	34.071301	-118.311641	None	https://maps.googleapis.com/maps/api/streetvie...	HomeCounty	06037	SearchHomeDescription	None	multi_family	21.0	21.0	8494.0	15606.0	None	None	None	None	1.0	NaN	None	None	1.0	NaN	SearchHomeFlags	None	None	None	None	False	None	None	True	MlsSource	[{'__typename': 'MlsAgent', 'id': 'WECA', 'age...	WECA	mls	None	None	None	25582121	HomePhoto	https://ap.rdcpix.com/3d3b3632448ed3eb636c57a2...	LeadAttributes	co_broke	True	OpCityLeadAttributes	True	ProductSummarySearchHome	basic_opt_in	[co_broke]	NaN	NaN	NaN	NaN	NaN	NaN
+142	1614543582	2982446291	None	for_sale	4	[{'__typename': 'Branding', 'photo': None, 'na...	None	None	False	[{'__typename': 'HomeAdvertiser', 'fulfillment...	NaN	None	https://www.realtor.com/realestateandhomes-det...	2399000	None	None	NaN	NaN	1982-12-07	2025-05-29T12:50:02.000000Z	135000.0	SearchHomeLocation	SearchHomeAddress	Los Angeles	240 S Normandie Ave	Normandie	240	Ave	USA	90004	CA	California	Coordinate	34.069967	-118.300001	None	https://maps.googleapis.com/maps/api/streetvie...	HomeCounty	06037	SearchHomeDescription	None	land	NaN	NaN	9004.0	NaN	None	None	None	None	NaN	NaN	None	None	NaN	NaN	SearchHomeFlags	None	None	None	None	False	None	None	None	MlsSource	[{'__typename': 'MlsAgent', 'id': 'MRCA', 'age...	MRCA	mls	None	None	None	OC25102562	HomePhoto	https://ap.rdcpix.com/e01289d844948401c7311261...	LeadAttributes	co_broke	True	OpCityLeadAttributes	True	ProductSummarySearchHome	basic_opt_in	[core.agent]	NaN	NaN	NaN	NaN	NaN	NaN
+143 rows × 89 columns
+
+
+
+======================================================================================
+Identifying and removing Unwanted Columns
+======================================================================================
+df_new = df.drop(["plan_id","pet_policy","community","list_price_min","list_price_max","estimate","location_address_coordinate_accuracy",
+                 "description_beds_max","description_beds_min","description_sqft_max","description_sqft_min","description_baths_min",
+                 "description_baths_max","flags_is_foreclosure","flags_is_plan","source_spec_id","source_plan_id","source_listing_href",
+                 "products","pet_policy___typename","estimate___typename","products___typename","lead_attributes___typename",
+                 "primary_photo___typename","source___typename","flags___typename","description___typename","location___typename","location_address___typename",
+                 "location_address_street_number","location_address_street_suffix","location_address_state_code","location_address_coordinate___typename",
+                 "location_county___typename","lead_attributes_opcity_lead_attributes___typename"], axis=1)
+
+
+
+
+======================================================================================
+Identifying and exploding nested Columns
+======================================================================================
+
+                        *****************************
+                        exploding advertisers column
+                        *****************************
+
+advertiser_df = df_new[
+    ["property_id", "listing_id", "branding", "status", "photo_count","open_houses","virtual_tours","matterport","href","list_price","price_reduced_amount",
+     "last_sold_date","list_date","last_sold_price","location_address_city","location_address_line","location_address_street_name","location_address_country",
+     "location_address_postal_code", "location_address_state","location_address_coordinate_lat","location_address_coordinate_lon","location_street_view_url",
+     "location_county_fips_code","description_sub_type","description_type","description_beds","description_baths","description_lot_sqft","description_sqft",
+     "description_baths_full","description_baths_half","description_baths_full_calc","flags_is_price_reduced","flags_is_new_construction","flags_is_new_listing",
+     "flags_is_coming_soon","flags_is_contingent","flags_is_pending","source_agents","source_id","source_type","source_listing_id","primary_photo_href",
+     "lead_attributes_lead_type","lead_attributes_show_contact_an_agent","lead_attributes_opcity_lead_attributes_flip_the_market_enabled","products_brand_name",
+     "products_products","estimate_estimate","pet_policy_cats","advertisers"]
+].explode("advertisers", ignore_index=True)
+
+advertiser_details = pd.json_normalize(advertiser_df.pop("advertisers")).add_prefix("advertiser_")
+
+advertiser_df = pd.concat([advertiser_df, advertiser_details], axis=1)
+
+advertiser1 = advertiser_df.drop(["advertiser___typename"], axis=1)
+
+
+                        *****************************
+                        exploding branding column
+                        *****************************
+
+branding_df = advertiser1[
+    ['property_id',
+ 'listing_id',
+ 'branding',
+ 'status',
+ 'photo_count',
+ 'open_houses',
+ 'virtual_tours',
+ 'matterport',
+ 'href',
+ 'list_price',
+ 'price_reduced_amount',
+ 'last_sold_date',
+ 'list_date',
+ 'last_sold_price',
+ 'location_address_city',
+ 'location_address_line',
+ 'location_address_street_name',
+ 'location_address_country',
+ 'location_address_postal_code',
+ 'location_address_state',
+ 'location_address_coordinate_lat',
+ 'location_address_coordinate_lon',
+ 'location_street_view_url',
+ 'location_county_fips_code',
+ 'description_sub_type',
+ 'description_type',
+ 'description_beds',
+ 'description_baths',
+ 'description_lot_sqft',
+ 'description_sqft',
+ 'description_baths_full',
+ 'description_baths_half',
+ 'description_baths_full_calc',
+ 'flags_is_price_reduced',
+ 'flags_is_new_construction',
+ 'flags_is_new_listing',
+ 'flags_is_coming_soon',
+ 'flags_is_contingent',
+ 'flags_is_pending',
+ 'source_agents',
+ 'source_id',
+ 'source_type',
+ 'source_listing_id',
+ 'primary_photo_href',
+ 'lead_attributes_lead_type',
+ 'lead_attributes_show_contact_an_agent',
+ 'lead_attributes_opcity_lead_attributes_flip_the_market_enabled',
+ 'products_brand_name',
+ 'products_products',
+ 'estimate_estimate',
+ 'pet_policy_cats',
+ 'advertiser_fulfillment_id',
+ 'advertiser_name',
+ 'advertiser_email',
+ 'advertiser_href',
+ 'advertiser_slogan',
+ 'advertiser_type']
+].explode("branding", ignore_index=True)
+
+branding_details = pd.json_normalize(branding_df.pop("branding")).add_prefix("branding_")
+
+branding_df = pd.concat([branding_df, branding_details], axis=1)
+
+
+                        *****************************
+                        exploding open_houses column
+                        *****************************
+
+open_houses_df = branding_df[
+    ['property_id',
+ 'listing_id',
+ 'status',
+ 'photo_count',
+ 'open_houses',
+ 'virtual_tours',
+ 'matterport',
+ 'href',
+ 'list_price',
+ 'price_reduced_amount',
+ 'last_sold_date',
+ 'list_date',
+ 'last_sold_price',
+ 'location_address_city',
+ 'location_address_line',
+ 'location_address_street_name',
+ 'location_address_country',
+ 'location_address_postal_code',
+ 'location_address_state',
+ 'location_address_coordinate_lat',
+ 'location_address_coordinate_lon',
+ 'location_street_view_url',
+ 'location_county_fips_code',
+ 'description_sub_type',
+ 'description_type',
+ 'description_beds',
+ 'description_baths',
+ 'description_lot_sqft',
+ 'description_sqft',
+ 'description_baths_full',
+ 'description_baths_half',
+ 'description_baths_full_calc',
+ 'flags_is_price_reduced',
+ 'flags_is_new_construction',
+ 'flags_is_new_listing',
+ 'flags_is_coming_soon',
+ 'flags_is_contingent',
+ 'flags_is_pending',
+ 'source_agents',
+ 'source_id',
+ 'source_type',
+ 'source_listing_id',
+ 'primary_photo_href',
+ 'lead_attributes_lead_type',
+ 'lead_attributes_show_contact_an_agent',
+ 'lead_attributes_opcity_lead_attributes_flip_the_market_enabled',
+ 'products_brand_name',
+ 'products_products',
+ 'estimate_estimate',
+ 'pet_policy_cats',
+ 'advertiser_fulfillment_id',
+ 'advertiser_name',
+ 'advertiser_email',
+ 'advertiser_href',
+ 'advertiser_slogan',
+ 'advertiser_type',
+ 'branding___typename',
+ 'branding_photo',
+ 'branding_name',
+ 'branding_phone',
+ 'branding_link']
+   
+].explode("open_houses", ignore_index=True)
+
+open_houses_details = pd.json_normalize(open_houses_df.pop("open_houses")).add_prefix("open_houses_")
+
+open_houses_df = pd.concat([open_houses_df, open_houses_details], axis=1)
+
+
+                        *****************************
+                        exploding source_agent column
+                        *****************************
+
+source_agents_df = open_houses_df[
+   ['property_id',
+ 'listing_id',
+ 'status',
+ 'photo_count',
+ 'virtual_tours',
+ 'matterport',
+ 'href',
+ 'list_price',
+ 'price_reduced_amount',
+ 'last_sold_date',
+ 'list_date',
+ 'last_sold_price',
+ 'location_address_city',
+ 'location_address_line',
+ 'location_address_street_name',
+ 'location_address_country',
+ 'location_address_postal_code',
+ 'location_address_state',
+ 'location_address_coordinate_lat',
+ 'location_address_coordinate_lon',
+ 'location_street_view_url',
+ 'location_county_fips_code',
+ 'description_sub_type',
+ 'description_type',
+ 'description_beds',
+ 'description_baths',
+ 'description_lot_sqft',
+ 'description_sqft',
+ 'description_baths_full',
+ 'description_baths_half',
+ 'description_baths_full_calc',
+ 'flags_is_price_reduced',
+ 'flags_is_new_construction',
+ 'flags_is_new_listing',
+ 'flags_is_coming_soon',
+ 'flags_is_contingent',
+ 'flags_is_pending',
+ 'source_agents',
+ 'source_id',
+ 'source_type',
+ 'source_listing_id',
+ 'primary_photo_href',
+ 'lead_attributes_lead_type',
+ 'lead_attributes_show_contact_an_agent',
+ 'lead_attributes_opcity_lead_attributes_flip_the_market_enabled',
+ 'products_brand_name',
+ 'products_products',
+ 'estimate_estimate',
+ 'pet_policy_cats',
+ 'advertiser_fulfillment_id',
+ 'advertiser_name',
+ 'advertiser_email',
+ 'advertiser_href',
+ 'advertiser_slogan',
+ 'advertiser_type',
+ 'branding___typename',
+ 'branding_photo',
+ 'branding_name',
+ 'branding_phone',
+ 'branding_link',
+ 'open_houses___typename',
+ 'open_houses_start_date',
+ 'open_houses_end_date',
+ 'open_houses_description',
+ 'open_houses_time_zone']
+   
+].explode("source_agents", ignore_index=True)
+
+source_agents_details = pd.json_normalize(source_agents_df.pop("source_agents")).add_prefix("source_agents_")
+
+source_agents_df = pd.concat([source_agents_df, source_agents_details], axis=1)
+
+housing_data_df = source_agents_df
+
+
+
+
+======================================================================================
+Handling Missing Values
+======================================================================================
+
+housing_data_df = housing_data_df.replace(["None", "nan", "NaN", "NULL", ""], np.nan)
+
+
+======================================================================================
+Converting Boolean Columns
+======================================================================================
+
+boolean_columns = [
+    "matterport",
+    "flags_is_price_reduced",
+    "flags_is_new_construction",
+    "flags_is_new_listing",
+    "flags_is_coming_soon",
+    "flags_is_contingent",
+    "flags_is_pending",
+    "lead_attributes_show_contact_an_agent",
+    "lead_attributes_opcity_lead_attributes_flip_the_market_enabled",
+    "pet_policy_cats"
+]
+for col in boolean_columns:
+    if col in housing_data_df.columns:
+        housing_data_df[col] = housing_data_df[col].replace({
+            "True": 1,
+            "False": 0,
+            True: 1,
+            False: 0
+            
+        })
+        housing_data_df[col] = pd.to_numeric(housing_data_df[col], errors="coerce")
+print(housing_data_df["flags_is_price_reduced"].value_counts(dropna=False))
+
+
+
+======================================================================================
+Converting Numeric Columns
+======================================================================================
+
+
+
+numeric_columns = [
+    "photo_count",
+    "list_price",
+    "price_reduced_amount",
+    "last_sold_price",
+    "location_address_coordinate_lat",
+    "location_address_coordinate_lon",
+    "description_beds",
+    "description_baths",
+    "description_lot_sqft",
+    "description_sqft",
+    "estimate_estimate"
+]
+for col in numeric_columns:
+    if col in housing_data_df.columns:
+        housing_data_df[col] = pd.to_numeric(housing_data_df[col], errors="coerce")
+
+
+
+
+======================================================================================
+Establishing MySQL Connection
+======================================================================================
+
+
+username="root"
+password="root123"
+host="host.docker.internal"
+port=3306
+database="housing_warehouse"
+    
+engine = create_engine(
+    f"mysql+pymysql://{username}:{password}@{host}:{port}/{database}"
+)
+with engine.connect() as connection:
+    print("Successfully connected to MySQL!")
+
+
+
+
+======================================================================================
+Loading Data into the Bronze Layer
+======================================================================================
+
+
+housing_data_df.to_sql(
+    name="bronze_housing_api",
+    con=engine,
+    if_exists="replace",
+    index=False,
+    chunksize=25
+)
+print("Data successfully loaded into MySQL!")
