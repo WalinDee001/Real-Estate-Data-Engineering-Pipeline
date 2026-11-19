@@ -1,0 +1,222 @@
+DELIMITER $$
+
+CREATE PROCEDURE housing_warehouse.load_silver() 
+BEGIN
+	TRUNCATE TABLE silver_housing_api;
+	INSERT INTO silver_housing_api(
+		property_id,
+		listing_id,
+		status,
+		photo_count,
+		matterport,
+		href,
+		list_price,
+		price_reduced_amount,
+		listing_price_with_discount,
+		last_sold_date,
+		last_sold_year,
+		housing_price_index,
+		list_date,
+		last_sold_price,
+		nominal_profit,
+		inflation_adjusted_profit,
+		nominal_ROI_percentage,
+		inflated_adjusted_ROI_percentage,
+		location_address_city,
+		location_address_line,
+		location_address_street_name,
+		location_address_country,
+		location_address_postal_code,
+		location_address_state,
+		location_address_coordinate_lat,
+		location_address_coordinate_lon,
+		location_street_view_url,
+		location_county_fips_code,
+		description_sub_type,
+		description_type,
+		description_beds,
+		description_baths,
+		description_lot_sqft,
+		description_sqft,
+		description_baths_full,
+		description_baths_half,
+		description_baths_full_calc,
+		flags_is_price_reduced,
+		flags_is_new_construction,
+		flags_is_new_listing,
+		flags_is_coming_soon,
+		flags_is_contingent,
+		flags_is_pending,
+		source_id,
+		source_type,
+		source_listing_id,
+		primary_photo_href,
+		lead_attributes_lead_type,
+		lead_attributes_show_contact_an_agent,
+		lead_attributes_opcity_lead_attributes_flip_the_market_enabled,
+		products_brand_name,
+		products_products,
+		estimate_estimate,
+		pet_policy_cats,
+		advertiser_fulfillment_id,
+		advertiser_name,
+		advertiser_email,
+		advertiser_href,
+		advertiser_slogan,
+		advertiser_type,
+		branding_name,
+		source_agents_id,
+		source_agents_agent_id,
+		source_agents_agent_name,
+		source_agents_office_id,
+		source_agents_office_name
+	)
+	select
+		property_id, listing_id, status, photo_count, matterport, href, list_price, price_reduced_amount,
+		listing_price_with_discount, last_sold_date, last_sold_year, housing_price_index,
+		list_date, last_sold_price,
+		listing_price_with_discount - last_sold_price as nominal_profit,
+		listing_price_with_discount - ((557.38/housing_price_index) * last_sold_price) as inflation_adjusted_profit,
+		((listing_price_with_discount - last_sold_price) / nullif(last_sold_price, 0)) * 100 as nominal_ROI_percentage,
+		((listing_price_with_discount - ((557.38/nullif(housing_price_index, 0)) * last_sold_price)) / nullif(((557.38/nullif(housing_price_index, 0)) * last_sold_price), 0)) * 100 as inflated_adjusted_ROI_percentage,
+		location_address_city, location_address_line,
+		location_address_street_name, location_address_country, location_address_postal_code, location_address_state, location_address_coordinate_lat, location_address_coordinate_lon,
+		location_street_view_url, location_county_fips_code, description_sub_type, description_type, description_beds, description_baths, description_lot_sqft, description_sqft, description_baths_full,
+		 description_baths_half, description_baths_full_calc, flags_is_price_reduced, flags_is_new_construction, flags_is_new_listing, flags_is_coming_soon, flags_is_contingent, flags_is_pending,
+		 source_id, source_type, source_listing_id, primary_photo_href, lead_attributes_lead_type, lead_attributes_show_contact_an_agent,
+		 lead_attributes_opcity_lead_attributes_flip_the_market_enabled, products_brand_name, products_products, estimate_estimate,pet_policy_cats,
+		 advertiser_fulfillment_id, advertiser_name, advertiser_email, advertiser_href, advertiser_slogan, advertiser_type,
+		 branding_name, source_agents_id, source_agents_agent_id, source_agents_agent_name, source_agents_office_id, source_agents_office_name
+	from(
+		select property_id, listing_id, status, photo_count, 
+		 case 
+		when matterport = 1 then "YES"
+		when matterport = 0 then "NO"
+		else "N/A"
+		end as matterport, 
+		 href, list_price,
+		 case
+		when price_reduced_amount is null then 0
+		else price_reduced_amount
+		end as price_reduced_amount,
+		coalesce(list_price,0) - coalesce(price_reduced_amount,0)  as listing_price_with_discount,
+		 str_to_date(last_sold_date, "%Y-%m-%d") as last_sold_date,
+		 case
+			when last_sold_date is null then NULL
+			else substring(last_sold_date,1,4)
+			end as last_sold_year,
+		case
+			when substring(last_sold_date,1,4) = 1967 then 16.92
+			when substring(last_sold_date,1,4) = 1969 then 16.92
+			when substring(last_sold_date,1,4) = 1972 then 16.92
+			when substring(last_sold_date,1,4) = 1975 then 16.92
+			when substring(last_sold_date,1,4) = 1976 then 20.46
+			when substring(last_sold_date,1,4) = 1977 then 25.16
+			when substring(last_sold_date,1,4) = 1979 then 35.67
+			when substring(last_sold_date,1,4) = 1982 then 39.99
+			when substring(last_sold_date,1,4) = 1983 then 47.50
+			when substring(last_sold_date,1,4) = 1986 then 55.43
+			when substring(last_sold_date,1,4) = 1989 then 93.81
+			when substring(last_sold_date,1,4) = 1991 then 96.45
+			when substring(last_sold_date,1,4) = 1994 then 82.36
+			when substring(last_sold_date,1,4) = 1995 then 78.63
+			when substring(last_sold_date,1,4) = 1997 then 78.96
+			when substring(last_sold_date,1,4) = 2000 then 100.00
+			when substring(last_sold_date,1,4) = 2001 then 109.68
+			when substring(last_sold_date,1,4) = 2002 then 123.51
+			when substring(last_sold_date,1,4) = 2004 then 172.86
+			when substring(last_sold_date,1,4) = 2005 then 219.56
+			when substring(last_sold_date,1,4) = 2008 then 208.21
+			when substring(last_sold_date,1,4) = 2009 then 175.88
+			when substring(last_sold_date,1,4) = 2010 then 174.34
+			when substring(last_sold_date,1,4) = 2012 then 165.27
+			when substring(last_sold_date,1,4) = 2013 then 180.44
+			when substring(last_sold_date,1,4) = 2014 then 204.48
+			when substring(last_sold_date,1,4) = 2015 then 216.00
+			when substring(last_sold_date,1,4) = 2016 then 232.36
+			when substring(last_sold_date,1,4) = 2017 then 248.31
+			when substring(last_sold_date,1,4) = 2018 then 264.98
+			when substring(last_sold_date,1,4) = 2019 then 274.27
+			when substring(last_sold_date,1,4) = 2020 then 281.78
+			when substring(last_sold_date,1,4) = 2021 then 314.32
+			when substring(last_sold_date,1,4) = 2022 then 362.89
+			when substring(last_sold_date,1,4) = 2023 then 374.44
+			when substring(last_sold_date,1,4) = 2024 then 396.98
+			when substring(last_sold_date,1,4) = 2025 then 403.74
+			when substring(last_sold_date,1,4) = 2026 then 557.38
+			else NULL
+			end as housing_price_index,
+		 
+		 str_to_date(left(list_date, 10), "%Y-%m-%d") as list_date,
+		 last_sold_price, location_address_city, location_address_line,
+		 location_address_street_name, location_address_country, location_address_postal_code, location_address_state, location_address_coordinate_lat, location_address_coordinate_lon,
+		 location_street_view_url, location_county_fips_code, description_sub_type, description_type, description_beds, description_baths, description_lot_sqft, description_sqft, description_baths_full,
+		 description_baths_half, description_baths_full_calc, 
+		 case 
+		when flags_is_price_reduced = 1 then "YES"
+		when flags_is_price_reduced = 0 then "NO"
+		else "N/A"
+		end as flags_is_price_reduced,
+		 case 
+		when flags_is_new_construction = 1 then "YES"
+		when flags_is_new_construction = 0 then "NO"
+		else "N/A"
+		end as flags_is_new_construction,
+		 case 
+		when flags_is_new_listing = 1 then "YES"
+		when flags_is_new_listing = 0 then "NO"
+		else "N/A"
+		end as flags_is_new_listing, 
+		 case 
+		when flags_is_coming_soon = 1 then "YES"
+		when flags_is_coming_soon = 0 then "NO"
+		else "N/A"
+		end as flags_is_coming_soon,
+		 case 
+		when flags_is_contingent = 1 then "YES"
+		when flags_is_contingent = 0 then "NO"
+		else "N/A"
+		end as flags_is_contingent,
+		 case 
+		when flags_is_pending = 1 then "YES"
+		when flags_is_pending = 0 then "NO"
+		else "N/A"
+		end as flags_is_pending,
+		 source_id,
+		 source_type, source_listing_id, primary_photo_href, lead_attributes_lead_type, 
+		 case 
+		when lead_attributes_show_contact_an_agent = 1 then "YES"
+		when lead_attributes_show_contact_an_agent = 0 then "NO"
+		else "N/A"
+		end as lead_attributes_show_contact_an_agent,
+		 case 
+		when lead_attributes_opcity_lead_attributes_flip_the_market_enabled = 1 then "YES"
+		when lead_attributes_opcity_lead_attributes_flip_the_market_enabled = 0 then "NO"
+		else "N/A"
+		end as lead_attributes_opcity_lead_attributes_flip_the_market_enabled,
+		 products_brand_name, products_products, estimate_estimate, 
+		 case 
+		when pet_policy_cats = 1 then "YES"
+		when pet_policy_cats = 0 then "NO"
+		else "N/A"
+		end as pet_policy_cats,
+		 advertiser_fulfillment_id, advertiser_name, advertiser_email, advertiser_href, advertiser_slogan, advertiser_type,
+		 branding_name, source_agents_id, source_agents_agent_id, source_agents_agent_name, source_agents_office_id, source_agents_office_name
+		from(
+			select*,
+			row_number() over (partition by listing_id order by source_agents_agent_id asc) as dup_rank
+			from bronze_housing_api
+		)t where dup_rank = 1
+	)t;
+
+	delete
+	from bronze_housing_api
+	where advertiser_type = "co_seller";
+
+
+	delete
+	from bronze_housing_api
+	where source_agents_office_id is null;
+END $$
+
+DELIMITER ;
