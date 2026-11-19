@@ -1,5 +1,6 @@
 DELIMITER $$
 
+CALL housing_warehouse.load_silver();
 CREATE PROCEDURE housing_warehouse.load_silver() 
 BEGIN
 	TRUNCATE TABLE silver_housing_api;
