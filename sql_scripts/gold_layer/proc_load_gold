@@ -1,0 +1,69 @@
+DELIMITER $$
+CALL housing_warehouse.load_gold();
+CREATE PROCEDURE housing_warehouse.load_gold()
+BEGIN
+
+	TRUNCATE TABLE gold_housing_api;
+	INSERT INTO gold_housing_api(
+		SELECT
+			property_id,
+			listing_id,
+			status,
+			3D_virtual_tour,
+			list_price,
+			discount,
+			discounted_list_price,
+			last_sold_date,
+			last_sold_year,
+			housing_price_index,
+			list_date,
+			last_sold_price,
+			nominal_profit,
+			inflation_adjusted_profit,
+			nominal_ROI_percentage,
+			inflated_adjusted_ROI_percentage,
+			property_city,
+			property_address,
+			property_type,
+			number_of_bedrooms,
+			number_of_bathrooms,
+			property_newly_listed,
+			source_listing_id,
+			advertiser_name,
+			advertiser_email,
+			company_name
+		
+		FROM(
+			SELECT
+				property_id,
+				listing_id,
+				status,
+				matterport as 3D_virtual_tour,
+				list_price,
+				price_reduced_amount as discount,
+				listing_price_with_discount as discounted_list_price,
+				last_sold_date,
+				last_sold_year,
+				housing_price_index,
+				list_date,
+				last_sold_price,
+				nominal_profit,
+				inflation_adjusted_profit,
+				nominal_ROI_percentage,
+				inflated_adjusted_ROI_percentage,
+				location_address_city as property_city,
+				location_address_line as property_address,
+				description_type as property_type,
+				description_beds as number_of_bedrooms,
+				description_baths as number_of_bathrooms,
+				flags_is_new_listing as property_newly_listed,
+				source_listing_id,
+				advertiser_name,
+				advertiser_email,
+				branding_name as company_name
+			FROM silver_housing_api
+		)t
+		);
+END $$
+
+DELIMITER ;
